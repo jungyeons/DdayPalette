@@ -3,7 +3,9 @@ import SwiftUI
 struct DesktopWidgetView: View {
     @StateObject private var store = CountdownStore()
     let size: DesktopWidgetSize
+    let isEditing: Bool
     let close: () -> Void
+    let finishEditing: () -> Void
 
     private var event: CountdownEvent? {
         store.events.sortedForDisplay().first
@@ -51,19 +53,40 @@ struct DesktopWidgetView: View {
                 .padding(edgePadding)
             }
 
-            Button(action: close) {
-                Image(systemName: "xmark")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white.opacity(0.9))
-                    .frame(width: closeSize, height: closeSize)
-                    .background(Circle().fill(.black.opacity(0.18)))
+            if isEditing {
+                editControls
             }
-            .buttonStyle(.plain)
-            .padding(size == .compact ? 7 : 10)
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .onReceive(NotificationCenter.default.publisher(for: .countdownStoreDidChange)) { _ in
             store.load()
+        }
+    }
+
+    private var editControls: some View {
+        ZStack {
+            Button(action: close) {
+                Image(systemName: "minus")
+                    .font(.system(size: size == .compact ? 11 : 13, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: closeSize, height: closeSize)
+                    .background(Circle().fill(.regularMaterial))
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .offset(x: -closeSize / 2, y: -closeSize / 2)
+
+            Button(action: finishEditing) {
+                Text("완료")
+                    .font(.system(size: size == .compact ? 10 : 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, size == .compact ? 8 : 10)
+                    .padding(.vertical, size == .compact ? 5 : 6)
+                    .background(Capsule().fill(.black.opacity(0.32)))
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+            .padding(size == .compact ? 8 : 10)
         }
     }
 

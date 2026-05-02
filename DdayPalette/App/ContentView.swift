@@ -124,6 +124,12 @@ struct ContentView: View {
                     }
                 }
                 Divider()
+                Button("위치 편집하기") {
+                    DesktopWidgetController.shared.beginPlacementMode()
+                }
+                Button("편집 완료") {
+                    DesktopWidgetController.shared.endPlacementMode()
+                }
                 Button("현재 설정으로 보이기") {
                     DesktopWidgetController.shared.show()
                 }

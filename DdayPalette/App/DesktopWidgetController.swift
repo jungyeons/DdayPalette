@@ -8,6 +8,7 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private var size: DesktopWidgetSize
     private var placement: DesktopWidgetPlacement
+    private var isEditingPlacement = false
     private var isProgrammaticMove = false
     private let defaults = UserDefaults.standard
 
@@ -30,17 +31,12 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
         }
 
         if let panel {
-            panel.contentView = NSHostingView(rootView: DesktopWidgetView(size: size) {
-                self.hide()
-            })
+            panel.contentView = NSHostingView(rootView: makeWidgetView())
             panel.setContentSize(size.dimensions)
             position(panel)
+            applyPanelLevel(panel)
             panel.makeKeyAndOrderFront(nil)
             return
-        }
-
-        let rootView = DesktopWidgetView(size: size) {
-            self.hide()
         }
 
         let panel = NSPanel(
@@ -51,13 +47,13 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
         )
         panel.isReleasedWhenClosed = false
         panel.delegate = self
-        panel.level = NSWindow.Level(Int(CGWindowLevelForKey(.desktopWindow)))
+        applyPanelLevel(panel)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
-        panel.contentView = NSHostingView(rootView: rootView)
+        panel.contentView = NSHostingView(rootView: makeWidgetView())
 
         self.panel = panel
         position(panel)
@@ -66,6 +62,41 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
 
     func hide() {
         panel?.orderOut(nil)
+    }
+
+    func beginPlacementMode() {
+        isEditingPlacement = true
+        show()
+        if let panel {
+            applyPanelLevel(panel)
+            panel.contentView = NSHostingView(rootView: makeWidgetView())
+            panel.orderFrontRegardless()
+        }
+    }
+
+    func endPlacementMode() {
+        isEditingPlacement = false
+        if let panel {
+            applyPanelLevel(panel)
+            panel.contentView = NSHostingView(rootView: makeWidgetView())
+            panel.orderFrontRegardless()
+        }
+    }
+
+    private func makeWidgetView() -> some View {
+        DesktopWidgetView(size: size, isEditing: isEditingPlacement) {
+            self.hide()
+        } finishEditing: {
+            self.endPlacementMode()
+        }
+    }
+
+    private func applyPanelLevel(_ panel: NSPanel) {
+        if isEditingPlacement {
+            panel.level = .floating
+        } else {
+            panel.level = NSWindow.Level(Int(CGWindowLevelForKey(.desktopWindow)))
+        }
     }
 
     private func position(_ panel: NSPanel) {
