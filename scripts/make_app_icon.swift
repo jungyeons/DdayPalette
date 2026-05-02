@@ -68,45 +68,34 @@ func drawIcon(size: Int) -> Data {
     shadow.shadowBlurRadius = s * 0.055
     shadow.shadowOffset = NSSize(width: 0, height: -s * 0.02)
 
-    let bg = NSBezierPath(roundedRect: bounds.insetBy(dx: s * 0.075, dy: s * 0.075), xRadius: s * 0.19, yRadius: s * 0.19)
+    let cardRect = bounds.insetBy(dx: s * 0.075, dy: s * 0.075)
+    let bg = NSBezierPath(roundedRect: cardRect, xRadius: s * 0.19, yRadius: s * 0.19)
     shadow.set()
     color(0xFFFFFF).setFill()
     bg.fill()
     NSShadow().set()
 
-    let top = NSBezierPath(roundedRect: NSRect(x: s * 0.075, y: s * 0.67, width: s * 0.85, height: s * 0.255), xRadius: s * 0.19, yRadius: s * 0.19)
+    NSColor(calibratedWhite: 0, alpha: 0.04).setStroke()
+    bg.lineWidth = max(1, s * 0.006)
+    bg.stroke()
+
+    let top = NSBezierPath(roundedRect: NSRect(x: cardRect.minX, y: s * 0.69, width: cardRect.width, height: s * 0.235), xRadius: s * 0.19, yRadius: s * 0.19)
     color(0xFF3B45).setFill()
     top.fill()
 
-    let cover = NSRect(x: s * 0.075, y: s * 0.67, width: s * 0.85, height: s * 0.13)
+    let cover = NSRect(x: cardRect.minX, y: s * 0.69, width: cardRect.width, height: s * 0.12)
     color(0xFF3B45).setFill()
     cover.fill()
 
-    let divider = NSBezierPath(roundedRect: NSRect(x: s * 0.14, y: s * 0.61, width: s * 0.72, height: max(2, s * 0.016)), xRadius: s * 0.008, yRadius: s * 0.008)
-    color(0xF1F3F5).setFill()
-    divider.fill()
-
-    let tab = NSBezierPath(roundedRect: NSRect(x: s * 0.24, y: s * 0.79, width: s * 0.13, height: s * 0.08), xRadius: s * 0.025, yRadius: s * 0.025)
-    NSColor.white.withAlphaComponent(0.9).setFill()
-    tab.fill()
-    let tab2 = NSBezierPath(roundedRect: NSRect(x: s * 0.63, y: s * 0.79, width: s * 0.13, height: s * 0.08), xRadius: s * 0.025, yRadius: s * 0.025)
-    tab2.fill()
-
-    let paragraph = NSMutableParagraphStyle()
-    paragraph.alignment = .center
-    let textAttributes: [NSAttributedString.Key: Any] = [
-        .font: NSFont.systemFont(ofSize: s * 0.34, weight: .black),
-        .foregroundColor: color(0x20242A),
-        .paragraphStyle: paragraph
-    ]
-    "D".draw(in: NSRect(x: s * 0.18, y: s * 0.32, width: s * 0.64, height: s * 0.35), withAttributes: textAttributes)
-
-    let smallAttributes: [NSAttributedString.Key: Any] = [
-        .font: NSFont.systemFont(ofSize: s * 0.115, weight: .bold),
-        .foregroundColor: color(0xFF3B45),
-        .paragraphStyle: paragraph
-    ]
-    "DAY".draw(in: NSRect(x: s * 0.18, y: s * 0.22, width: s * 0.64, height: s * 0.14), withAttributes: smallAttributes)
+    let check = NSBezierPath()
+    check.move(to: NSPoint(x: s * 0.34, y: s * 0.43))
+    check.line(to: NSPoint(x: s * 0.46, y: s * 0.31))
+    check.line(to: NSPoint(x: s * 0.68, y: s * 0.55))
+    check.lineWidth = s * 0.095
+    check.lineCapStyle = .round
+    check.lineJoinStyle = .round
+    color(0xFF5A64).setStroke()
+    check.stroke()
 
     guard let png = bitmap.representation(using: .png, properties: [:]) else {
         fatalError("Could not export PNG")
