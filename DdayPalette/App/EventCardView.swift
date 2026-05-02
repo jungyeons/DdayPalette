@@ -3,6 +3,7 @@ import SwiftUI
 struct EventCardView: View {
     let event: CountdownEvent
     let edit: () -> Void
+    let addWidget: () -> Void
     let toggleFavorite: () -> Void
     let delete: () -> Void
 
@@ -52,6 +53,7 @@ struct EventCardView: View {
 
                 HStack {
                     Button("편집", action: edit)
+                    Button("위젯 추가", action: addWidget)
                     Spacer()
                     Button(role: .destructive, action: delete) {
                         Image(systemName: "trash")

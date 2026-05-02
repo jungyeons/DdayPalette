@@ -5,7 +5,7 @@ import SwiftUI
 final class DesktopWidgetController: NSObject, NSWindowDelegate {
     static let shared = DesktopWidgetController()
 
-    private var panel: NSPanel?
+    private var panels: [UUID: NSPanel] = [:]
     private var size: DesktopWidgetSize
     private var placement: DesktopWidgetPlacement
     private var isEditingPlacement = false
@@ -30,10 +30,31 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
             defaults.removeObject(forKey: "desktopWidget.customY")
         }
 
-        if let panel {
-            panel.contentView = NSHostingView(rootView: makeWidgetView())
+        show(eventID: nil, size: newSize, placement: newPlacement)
+    }
+
+    func show(eventID: UUID?, size newSize: DesktopWidgetSize? = nil, placement newPlacement: DesktopWidgetPlacement? = nil) {
+        let widgetID = eventID ?? Self.defaultWidgetID
+        if let newSize {
+            size = newSize
+            defaults.set(newSize.rawValue, forKey: sizeKey(widgetID))
+            defaults.set(newSize.rawValue, forKey: "desktopWidget.size")
+        } else {
+            size = DesktopWidgetSize(rawValue: defaults.string(forKey: sizeKey(widgetID)) ?? "") ?? size
+        }
+        if let newPlacement {
+            placement = newPlacement
+            defaults.set(newPlacement.rawValue, forKey: placementKey(widgetID))
+            defaults.set(newPlacement.rawValue, forKey: "desktopWidget.placement")
+            clearCustomPosition(widgetID)
+        } else {
+            placement = DesktopWidgetPlacement(rawValue: defaults.string(forKey: placementKey(widgetID)) ?? "") ?? placement
+        }
+
+        if let panel = panels[widgetID] {
+            panel.contentView = NSHostingView(rootView: makeWidgetView(eventID: eventID, widgetID: widgetID))
             panel.setContentSize(size.dimensions)
-            position(panel)
+            position(panel, widgetID: widgetID)
             applyPanelLevel(panel)
             panel.makeKeyAndOrderFront(nil)
             return
@@ -45,6 +66,7 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
+        panel.identifier = NSUserInterfaceItemIdentifier(widgetID.uuidString)
         panel.isReleasedWhenClosed = false
         panel.delegate = self
         applyPanelLevel(panel)
@@ -53,39 +75,49 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
-        panel.contentView = NSHostingView(rootView: makeWidgetView())
+        panel.contentView = NSHostingView(rootView: makeWidgetView(eventID: eventID, widgetID: widgetID))
 
-        self.panel = panel
-        position(panel)
+        panels[widgetID] = panel
+        position(panel, widgetID: widgetID)
         panel.orderFrontRegardless()
     }
 
     func hide() {
-        panel?.orderOut(nil)
+        panels.values.forEach { $0.orderOut(nil) }
+    }
+
+    func hide(eventID: UUID?) {
+        let widgetID = eventID ?? Self.defaultWidgetID
+        panels[widgetID]?.orderOut(nil)
     }
 
     func beginPlacementMode() {
         isEditingPlacement = true
         show()
-        if let panel {
+        for panel in panels.values {
             applyPanelLevel(panel)
-            panel.contentView = NSHostingView(rootView: makeWidgetView())
+            let eventID = eventID(for: panel)
+            let widgetID = eventID ?? Self.defaultWidgetID
+            panel.contentView = NSHostingView(rootView: makeWidgetView(eventID: eventID, widgetID: widgetID))
             panel.orderFrontRegardless()
         }
     }
 
     func endPlacementMode() {
         isEditingPlacement = false
-        if let panel {
+        for panel in panels.values {
             applyPanelLevel(panel)
-            panel.contentView = NSHostingView(rootView: makeWidgetView())
+            let eventID = eventID(for: panel)
+            let widgetID = eventID ?? Self.defaultWidgetID
+            panel.contentView = NSHostingView(rootView: makeWidgetView(eventID: eventID, widgetID: widgetID))
             panel.orderFrontRegardless()
         }
     }
 
-    private func makeWidgetView() -> some View {
-        DesktopWidgetView(size: size, isEditing: isEditingPlacement) {
-            self.hide()
+    private func makeWidgetView(eventID: UUID?, widgetID: UUID) -> some View {
+        let widgetSize = DesktopWidgetSize(rawValue: defaults.string(forKey: sizeKey(widgetID)) ?? "") ?? size
+        return DesktopWidgetView(eventID: eventID, size: widgetSize, isEditing: isEditingPlacement) {
+            self.hide(eventID: eventID)
         } finishEditing: {
             self.endPlacementMode()
         }
@@ -99,43 +131,66 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
         }
     }
 
-    private func position(_ panel: NSPanel) {
+    private func position(_ panel: NSPanel, widgetID: UUID) {
         guard let screen = NSScreen.main else { return }
         isProgrammaticMove = true
         defer { isProgrammaticMove = false }
 
-        if defaults.object(forKey: "desktopWidget.customX") != nil,
-           defaults.object(forKey: "desktopWidget.customY") != nil {
-            let x = defaults.double(forKey: "desktopWidget.customX")
-            let y = defaults.double(forKey: "desktopWidget.customY")
+        if defaults.object(forKey: customXKey(widgetID)) != nil,
+           defaults.object(forKey: customYKey(widgetID)) != nil {
+            let x = defaults.double(forKey: customXKey(widgetID))
+            let y = defaults.double(forKey: customYKey(widgetID))
             panel.setFrameOrigin(NSPoint(x: x, y: y))
             return
         }
 
         let frame = screen.visibleFrame
         let margin: CGFloat = 28
+        let panelSize = panel.frame.size
         let origin: NSPoint
         switch placement {
         case .topLeft:
-            origin = NSPoint(x: frame.minX + margin, y: frame.maxY - size.dimensions.height - margin)
+            origin = NSPoint(x: frame.minX + margin, y: frame.maxY - panelSize.height - margin)
         case .topRight:
-            origin = NSPoint(x: frame.maxX - size.dimensions.width - margin, y: frame.maxY - size.dimensions.height - margin)
+            origin = NSPoint(x: frame.maxX - panelSize.width - margin, y: frame.maxY - panelSize.height - margin)
         case .bottomLeft:
             origin = NSPoint(x: frame.minX + margin, y: frame.minY + margin)
         case .bottomRight:
-            origin = NSPoint(x: frame.maxX - size.dimensions.width - margin, y: frame.minY + margin)
+            origin = NSPoint(x: frame.maxX - panelSize.width - margin, y: frame.minY + margin)
         case .center:
-            origin = NSPoint(x: frame.midX - size.dimensions.width / 2, y: frame.midY - size.dimensions.height / 2)
+            origin = NSPoint(x: frame.midX - panelSize.width / 2, y: frame.midY - panelSize.height / 2)
         }
         panel.setFrameOrigin(origin)
     }
 
     nonisolated func windowDidMove(_ notification: Notification) {
         Task { @MainActor in
-            guard !isProgrammaticMove, let panel else { return }
-            defaults.set(panel.frame.origin.x, forKey: "desktopWidget.customX")
-            defaults.set(panel.frame.origin.y, forKey: "desktopWidget.customY")
+            guard !isProgrammaticMove,
+                  let panel = notification.object as? NSPanel,
+                  let rawID = panel.identifier?.rawValue,
+                  let widgetID = UUID(uuidString: rawID) else { return }
+            defaults.set(panel.frame.origin.x, forKey: customXKey(widgetID))
+            defaults.set(panel.frame.origin.y, forKey: customYKey(widgetID))
         }
+    }
+
+    private static let defaultWidgetID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+
+    private func eventID(for panel: NSPanel) -> UUID? {
+        guard let rawID = panel.identifier?.rawValue,
+              let widgetID = UUID(uuidString: rawID),
+              widgetID != Self.defaultWidgetID else { return nil }
+        return widgetID
+    }
+
+    private func sizeKey(_ widgetID: UUID) -> String { "desktopWidget.\(widgetID.uuidString).size" }
+    private func placementKey(_ widgetID: UUID) -> String { "desktopWidget.\(widgetID.uuidString).placement" }
+    private func customXKey(_ widgetID: UUID) -> String { "desktopWidget.\(widgetID.uuidString).customX" }
+    private func customYKey(_ widgetID: UUID) -> String { "desktopWidget.\(widgetID.uuidString).customY" }
+
+    private func clearCustomPosition(_ widgetID: UUID) {
+        defaults.removeObject(forKey: customXKey(widgetID))
+        defaults.removeObject(forKey: customYKey(widgetID))
     }
 }
 

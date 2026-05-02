@@ -62,6 +62,8 @@ struct ContentView: View {
                             ForEach(visibleEvents) { event in
                                 EventCardView(event: event) {
                                     editingEvent = event
+                                } addWidget: {
+                                    DesktopWidgetController.shared.show(eventID: event.id)
                                 } toggleFavorite: {
                                     store.toggleFavorite(event)
                                     WidgetCenter.shared.reloadAllTimelines()

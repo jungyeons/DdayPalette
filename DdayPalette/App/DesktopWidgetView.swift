@@ -2,13 +2,17 @@ import SwiftUI
 
 struct DesktopWidgetView: View {
     @StateObject private var store = CountdownStore()
+    let eventID: UUID?
     let size: DesktopWidgetSize
     let isEditing: Bool
     let close: () -> Void
     let finishEditing: () -> Void
 
     private var event: CountdownEvent? {
-        store.events.sortedForDisplay().first
+        if let eventID, let event = store.events.first(where: { $0.id == eventID }) {
+            return event
+        }
+        return store.events.sortedForDisplay().first
     }
 
     var body: some View {
