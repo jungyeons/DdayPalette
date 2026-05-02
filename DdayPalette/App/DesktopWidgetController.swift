@@ -33,7 +33,7 @@ final class DesktopWidgetController {
             defer: false
         )
         panel.isReleasedWhenClosed = false
-        panel.level = .floating
+        panel.level = NSWindow.Level(Int(CGWindowLevelForKey(.desktopWindow)))
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.backgroundColor = .clear
         panel.isOpaque = false
