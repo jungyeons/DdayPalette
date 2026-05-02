@@ -14,6 +14,8 @@ final class DesktopWidgetController {
         self.size = size
         if let panel {
             panel.contentView = NSHostingView(rootView: DesktopWidgetView(size: size) {
+                self.show(size: $0)
+            } close: {
                 self.hide()
             })
             panel.setContentSize(size.dimensions)
@@ -23,6 +25,8 @@ final class DesktopWidgetController {
         }
 
         let rootView = DesktopWidgetView(size: size) {
+            self.show(size: $0)
+        } close: {
             self.hide()
         }
 
@@ -75,6 +79,14 @@ enum DesktopWidgetSize: String, CaseIterable, Identifiable {
         case .compact: "작게"
         case .small: "보통"
         case .large: "크게"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .compact: "S"
+        case .small: "M"
+        case .large: "L"
         }
     }
 
