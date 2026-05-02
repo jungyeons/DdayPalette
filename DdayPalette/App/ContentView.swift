@@ -108,8 +108,12 @@ struct ContentView: View {
                 Label("추가", systemImage: "plus")
             }
             .keyboardShortcut("n", modifiers: [.command])
-            Button {
-                DesktopWidgetController.shared.show()
+            Menu {
+                ForEach(DesktopWidgetSize.allCases) { size in
+                    Button(size.title) {
+                        DesktopWidgetController.shared.show(size: size)
+                    }
+                }
             } label: {
                 Label("데스크탑 위젯", systemImage: "macwindow")
             }
