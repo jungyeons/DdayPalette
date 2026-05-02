@@ -12,6 +12,9 @@ struct DesktopWidgetView: View {
         if let eventID, let event = store.events.first(where: { $0.id == eventID }) {
             return event
         }
+        if eventID != nil {
+            return nil
+        }
         return store.events.sortedForDisplay().first
     }
 
@@ -47,9 +50,9 @@ struct DesktopWidgetView: View {
                 Color(hex: CountdownPalette.colors[0].hex)
                 VStack(alignment: .leading, spacing: 8) {
                     Spacer()
-                    Text("D-day")
+                    Text(eventID == nil ? "D-day" : "삭제됨")
                         .font(.system(size: titleSize, weight: .black))
-                    Text("기록 없음")
+                    Text(eventID == nil ? "기록 없음" : "위젯 닫기")
                         .font(.system(size: titleSize - 4, weight: .black))
                 }
                 .foregroundStyle(.white)

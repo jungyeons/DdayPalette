@@ -91,6 +91,20 @@ final class DesktopWidgetController: NSObject, NSWindowDelegate {
         panels[widgetID]?.orderOut(nil)
     }
 
+    func remove(eventID: UUID) {
+        panels[eventID]?.orderOut(nil)
+        panels[eventID] = nil
+        defaults.removeObject(forKey: sizeKey(eventID))
+        defaults.removeObject(forKey: placementKey(eventID))
+        clearCustomPosition(eventID)
+    }
+
+    func removeMissingEventPanels(existingEventIDs: Set<UUID>) {
+        for widgetID in panels.keys where widgetID != Self.defaultWidgetID && !existingEventIDs.contains(widgetID) {
+            remove(eventID: widgetID)
+        }
+    }
+
     func beginPlacementMode() {
         isEditingPlacement = true
         show()

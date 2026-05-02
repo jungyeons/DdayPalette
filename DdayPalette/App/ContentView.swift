@@ -69,6 +69,7 @@ struct ContentView: View {
                                     WidgetCenter.shared.reloadAllTimelines()
                                 } delete: {
                                     store.delete(event)
+                                    DesktopWidgetController.shared.remove(eventID: event.id)
                                     WidgetCenter.shared.reloadAllTimelines()
                                 }
                             }
@@ -91,6 +92,9 @@ struct ContentView: View {
                 store.upsert(updated)
                 WidgetCenter.shared.reloadAllTimelines()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .countdownStoreDidChange)) { _ in
+            DesktopWidgetController.shared.removeMissingEventPanels(existingEventIDs: Set(store.events.map(\.id)))
         }
     }
 
