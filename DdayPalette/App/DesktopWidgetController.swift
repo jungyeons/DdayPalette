@@ -78,14 +78,6 @@ enum DesktopWidgetSize: String, CaseIterable, Identifiable {
         }
     }
 
-    var shortTitle: String {
-        switch self {
-        case .compact: "S"
-        case .small: "M"
-        case .large: "L"
-        }
-    }
-
     var dimensions: NSSize {
         switch self {
         case .compact: NSSize(width: 180, height: 150)
