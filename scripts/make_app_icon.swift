@@ -64,56 +64,49 @@ func drawIcon(size: Int) -> Data {
 
     let s = CGFloat(size)
     let shadow = NSShadow()
-    shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
-    shadow.shadowBlurRadius = s * 0.06
-    shadow.shadowOffset = NSSize(width: 0, height: -s * 0.025)
+    shadow.shadowColor = NSColor.black.withAlphaComponent(0.16)
+    shadow.shadowBlurRadius = s * 0.055
+    shadow.shadowOffset = NSSize(width: 0, height: -s * 0.02)
 
-    let bg = NSBezierPath(roundedRect: bounds.insetBy(dx: s * 0.055, dy: s * 0.055), xRadius: s * 0.22, yRadius: s * 0.22)
+    let bg = NSBezierPath(roundedRect: bounds.insetBy(dx: s * 0.075, dy: s * 0.075), xRadius: s * 0.19, yRadius: s * 0.19)
     shadow.set()
-    color(0xFF3B45).setFill()
+    color(0xFFFFFF).setFill()
     bg.fill()
     NSShadow().set()
 
-    let highlight = NSBezierPath(roundedRect: NSRect(x: s * 0.13, y: s * 0.68, width: s * 0.74, height: s * 0.19), xRadius: s * 0.09, yRadius: s * 0.09)
-    NSColor.white.withAlphaComponent(0.20).setFill()
-    highlight.fill()
+    let top = NSBezierPath(roundedRect: NSRect(x: s * 0.075, y: s * 0.67, width: s * 0.85, height: s * 0.255), xRadius: s * 0.19, yRadius: s * 0.19)
+    color(0xFF3B45).setFill()
+    top.fill()
 
-    let tab = NSBezierPath(roundedRect: NSRect(x: s * 0.18, y: s * 0.72, width: s * 0.18, height: s * 0.11), xRadius: s * 0.035, yRadius: s * 0.035)
-    NSColor.white.withAlphaComponent(0.92).setFill()
+    let cover = NSRect(x: s * 0.075, y: s * 0.67, width: s * 0.85, height: s * 0.13)
+    color(0xFF3B45).setFill()
+    cover.fill()
+
+    let divider = NSBezierPath(roundedRect: NSRect(x: s * 0.14, y: s * 0.61, width: s * 0.72, height: max(2, s * 0.016)), xRadius: s * 0.008, yRadius: s * 0.008)
+    color(0xF1F3F5).setFill()
+    divider.fill()
+
+    let tab = NSBezierPath(roundedRect: NSRect(x: s * 0.24, y: s * 0.79, width: s * 0.13, height: s * 0.08), xRadius: s * 0.025, yRadius: s * 0.025)
+    NSColor.white.withAlphaComponent(0.9).setFill()
     tab.fill()
-    let tab2 = NSBezierPath(roundedRect: NSRect(x: s * 0.41, y: s * 0.72, width: s * 0.18, height: s * 0.11), xRadius: s * 0.035, yRadius: s * 0.035)
+    let tab2 = NSBezierPath(roundedRect: NSRect(x: s * 0.63, y: s * 0.79, width: s * 0.13, height: s * 0.08), xRadius: s * 0.025, yRadius: s * 0.025)
     tab2.fill()
 
-    let badgeRect = NSRect(x: s * 0.57, y: s * 0.55, width: s * 0.28, height: s * 0.28)
-    NSColor.white.setFill()
-    NSBezierPath(ovalIn: badgeRect).fill()
-
-    NSColor(calibratedRed: 1, green: 0.05, blue: 0.12, alpha: 1).setFill()
-    let heart = NSBezierPath()
-    let cx = badgeRect.midX
-    let cy = badgeRect.midY - s * 0.012
-    let h = badgeRect.height * 0.42
-    heart.move(to: NSPoint(x: cx, y: cy - h * 0.7))
-    heart.curve(to: NSPoint(x: cx - h, y: cy + h * 0.08), controlPoint1: NSPoint(x: cx - h * 0.7, y: cy - h * 0.22), controlPoint2: NSPoint(x: cx - h, y: cy - h * 0.46))
-    heart.curve(to: NSPoint(x: cx, y: cy + h * 0.46), controlPoint1: NSPoint(x: cx - h, y: cy + h * 0.5), controlPoint2: NSPoint(x: cx - h * 0.35, y: cy + h * 0.56))
-    heart.curve(to: NSPoint(x: cx + h, y: cy + h * 0.08), controlPoint1: NSPoint(x: cx + h * 0.35, y: cy + h * 0.56), controlPoint2: NSPoint(x: cx + h, y: cy + h * 0.5))
-    heart.curve(to: NSPoint(x: cx, y: cy - h * 0.7), controlPoint1: NSPoint(x: cx + h, y: cy - h * 0.46), controlPoint2: NSPoint(x: cx + h * 0.7, y: cy - h * 0.22))
-    heart.fill()
-
     let paragraph = NSMutableParagraphStyle()
-    paragraph.alignment = .left
+    paragraph.alignment = .center
     let textAttributes: [NSAttributedString.Key: Any] = [
-        .font: NSFont.systemFont(ofSize: s * 0.19, weight: .black),
-        .foregroundColor: NSColor.white,
+        .font: NSFont.systemFont(ofSize: s * 0.34, weight: .black),
+        .foregroundColor: color(0x20242A),
         .paragraphStyle: paragraph
     ]
-    "D".draw(in: NSRect(x: s * 0.19, y: s * 0.32, width: s * 0.3, height: s * 0.22), withAttributes: textAttributes)
+    "D".draw(in: NSRect(x: s * 0.18, y: s * 0.32, width: s * 0.64, height: s * 0.35), withAttributes: textAttributes)
 
     let smallAttributes: [NSAttributedString.Key: Any] = [
-        .font: NSFont.systemFont(ofSize: s * 0.135, weight: .heavy),
-        .foregroundColor: NSColor.white.withAlphaComponent(0.95)
+        .font: NSFont.systemFont(ofSize: s * 0.115, weight: .bold),
+        .foregroundColor: color(0xFF3B45),
+        .paragraphStyle: paragraph
     ]
-    "-24".draw(in: NSRect(x: s * 0.19, y: s * 0.19, width: s * 0.45, height: s * 0.17), withAttributes: smallAttributes)
+    "DAY".draw(in: NSRect(x: s * 0.18, y: s * 0.22, width: s * 0.64, height: s * 0.14), withAttributes: smallAttributes)
 
     guard let png = bitmap.representation(using: .png, properties: [:]) else {
         fatalError("Could not export PNG")
