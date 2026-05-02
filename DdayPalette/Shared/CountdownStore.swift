@@ -45,6 +45,7 @@ final class CountdownStore: ObservableObject {
     private func save() {
         guard let data = try? encoder.encode(events) else { return }
         defaults.set(data, forKey: CountdownPalette.storageKey)
+        NotificationCenter.default.post(name: .countdownStoreDidChange, object: nil)
     }
 
     static func loadForWidget() -> [CountdownEvent] {
@@ -69,4 +70,8 @@ final class CountdownStore: ObservableObject {
             )
         ]
     }
+}
+
+extension Notification.Name {
+    static let countdownStoreDidChange = Notification.Name("countdownStoreDidChange")
 }

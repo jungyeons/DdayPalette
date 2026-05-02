@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct DdayPaletteApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store = CountdownStore()
 
     var body: some Scene {
