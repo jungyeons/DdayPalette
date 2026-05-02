@@ -2,16 +2,33 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class DesktopWidgetController {
+final class DesktopWidgetController: NSObject, NSWindowDelegate {
     static let shared = DesktopWidgetController()
 
     private var panel: NSPanel?
-    private var size: DesktopWidgetSize = .small
+    private var size: DesktopWidgetSize
+    private var placement: DesktopWidgetPlacement
+    private var isProgrammaticMove = false
+    private let defaults = UserDefaults.standard
 
-    private init() {}
+    private override init() {
+        size = DesktopWidgetSize(rawValue: UserDefaults.standard.string(forKey: "desktopWidget.size") ?? "") ?? .small
+        placement = DesktopWidgetPlacement(rawValue: UserDefaults.standard.string(forKey: "desktopWidget.placement") ?? "") ?? .topRight
+        super.init()
+    }
 
-    func show(size: DesktopWidgetSize = .small) {
-        self.size = size
+    func show(size newSize: DesktopWidgetSize? = nil, placement newPlacement: DesktopWidgetPlacement? = nil) {
+        if let newSize {
+            size = newSize
+            defaults.set(newSize.rawValue, forKey: "desktopWidget.size")
+        }
+        if let newPlacement {
+            placement = newPlacement
+            defaults.set(newPlacement.rawValue, forKey: "desktopWidget.placement")
+            defaults.removeObject(forKey: "desktopWidget.customX")
+            defaults.removeObject(forKey: "desktopWidget.customY")
+        }
+
         if let panel {
             panel.contentView = NSHostingView(rootView: DesktopWidgetView(size: size) {
                 self.hide()
@@ -33,6 +50,7 @@ final class DesktopWidgetController {
             defer: false
         )
         panel.isReleasedWhenClosed = false
+        panel.delegate = self
         panel.level = NSWindow.Level(Int(CGWindowLevelForKey(.desktopWindow)))
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.backgroundColor = .clear
@@ -40,11 +58,6 @@ final class DesktopWidgetController {
         panel.hasShadow = true
         panel.isMovableByWindowBackground = true
         panel.contentView = NSHostingView(rootView: rootView)
-
-        if let screen = NSScreen.main {
-            let frame = screen.visibleFrame
-            panel.setFrameOrigin(NSPoint(x: frame.minX + 28, y: frame.maxY - 310))
-        }
 
         self.panel = panel
         position(panel)
@@ -57,9 +70,41 @@ final class DesktopWidgetController {
 
     private func position(_ panel: NSPanel) {
         guard let screen = NSScreen.main else { return }
+        isProgrammaticMove = true
+        defer { isProgrammaticMove = false }
+
+        if defaults.object(forKey: "desktopWidget.customX") != nil,
+           defaults.object(forKey: "desktopWidget.customY") != nil {
+            let x = defaults.double(forKey: "desktopWidget.customX")
+            let y = defaults.double(forKey: "desktopWidget.customY")
+            panel.setFrameOrigin(NSPoint(x: x, y: y))
+            return
+        }
+
         let frame = screen.visibleFrame
         let margin: CGFloat = 28
-        panel.setFrameOrigin(NSPoint(x: frame.minX + margin, y: frame.maxY - size.dimensions.height - margin))
+        let origin: NSPoint
+        switch placement {
+        case .topLeft:
+            origin = NSPoint(x: frame.minX + margin, y: frame.maxY - size.dimensions.height - margin)
+        case .topRight:
+            origin = NSPoint(x: frame.maxX - size.dimensions.width - margin, y: frame.maxY - size.dimensions.height - margin)
+        case .bottomLeft:
+            origin = NSPoint(x: frame.minX + margin, y: frame.minY + margin)
+        case .bottomRight:
+            origin = NSPoint(x: frame.maxX - size.dimensions.width - margin, y: frame.minY + margin)
+        case .center:
+            origin = NSPoint(x: frame.midX - size.dimensions.width / 2, y: frame.midY - size.dimensions.height / 2)
+        }
+        panel.setFrameOrigin(origin)
+    }
+
+    nonisolated func windowDidMove(_ notification: Notification) {
+        Task { @MainActor in
+            guard !isProgrammaticMove, let panel else { return }
+            defaults.set(panel.frame.origin.x, forKey: "desktopWidget.customX")
+            defaults.set(panel.frame.origin.y, forKey: "desktopWidget.customY")
+        }
     }
 }
 
@@ -83,6 +128,26 @@ enum DesktopWidgetSize: String, CaseIterable, Identifiable {
         case .compact: NSSize(width: 180, height: 150)
         case .small: NSSize(width: 210, height: 180)
         case .large: NSSize(width: 270, height: 270)
+        }
+    }
+}
+
+enum DesktopWidgetPlacement: String, CaseIterable, Identifiable {
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
+    case center
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .topLeft: "왼쪽 위"
+        case .topRight: "오른쪽 위"
+        case .bottomLeft: "왼쪽 아래"
+        case .bottomRight: "오른쪽 아래"
+        case .center: "가운데"
         }
     }
 }

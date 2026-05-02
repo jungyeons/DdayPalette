@@ -109,10 +109,26 @@ struct ContentView: View {
             }
             .keyboardShortcut("n", modifiers: [.command])
             Menu {
-                ForEach(DesktopWidgetSize.allCases) { size in
-                    Button(size.title) {
-                        DesktopWidgetController.shared.show(size: size)
+                Section("크기") {
+                    ForEach(DesktopWidgetSize.allCases) { size in
+                        Button(size.title) {
+                            DesktopWidgetController.shared.show(size: size)
+                        }
                     }
+                }
+                Section("위치") {
+                    ForEach(DesktopWidgetPlacement.allCases) { placement in
+                        Button(placement.title) {
+                            DesktopWidgetController.shared.show(placement: placement)
+                        }
+                    }
+                }
+                Divider()
+                Button("현재 설정으로 보이기") {
+                    DesktopWidgetController.shared.show()
+                }
+                Button("숨기기") {
+                    DesktopWidgetController.shared.hide()
                 }
             } label: {
                 Label("데스크탑 위젯", systemImage: "macwindow")
