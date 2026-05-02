@@ -14,8 +14,6 @@ final class DesktopWidgetController {
         self.size = size
         if let panel {
             panel.contentView = NSHostingView(rootView: DesktopWidgetView(size: size) {
-                self.show(size: $0)
-            } close: {
                 self.hide()
             })
             panel.setContentSize(size.dimensions)
@@ -25,8 +23,6 @@ final class DesktopWidgetController {
         }
 
         let rootView = DesktopWidgetView(size: size) {
-            self.show(size: $0)
-        } close: {
             self.hide()
         }
 

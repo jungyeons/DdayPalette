@@ -3,7 +3,6 @@ import SwiftUI
 struct DesktopWidgetView: View {
     @StateObject private var store = CountdownStore()
     let size: DesktopWidgetSize
-    let changeSize: (DesktopWidgetSize) -> Void
     let close: () -> Void
 
     private var event: CountdownEvent? {
@@ -61,35 +60,10 @@ struct DesktopWidgetView: View {
             }
             .buttonStyle(.plain)
             .padding(size == .compact ? 7 : 10)
-
-            sizeControls
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(size == .compact ? 8 : 11)
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .onReceive(NotificationCenter.default.publisher(for: .countdownStoreDidChange)) { _ in
             store.load()
-        }
-    }
-
-    private var sizeControls: some View {
-        HStack(spacing: 5) {
-            ForEach(DesktopWidgetSize.allCases) { option in
-                Button {
-                    changeSize(option)
-                } label: {
-                    Text(option.shortTitle)
-                        .font(.system(size: size == .compact ? 9 : 10, weight: .bold))
-                        .foregroundStyle(option == size ? .black : .white)
-                        .frame(width: size == .compact ? 22 : 25, height: size == .compact ? 18 : 20)
-                        .background(
-                            Capsule()
-                                .fill(option == size ? .white : .black.opacity(0.18))
-                        )
-                }
-                .buttonStyle(.plain)
-                .help(option.title)
-            }
         }
     }
 
